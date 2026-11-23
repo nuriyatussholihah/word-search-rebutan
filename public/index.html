@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Word Search Rebutan - Squad Limo</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+</head>
+<body>
+
+  <!-- Header Aplikasi -->
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-logo">🔍</span>
+      <div class="brand-text">
+        <h1>Word Search Rebutan</h1>
+        <p>Kolaborasi Tim Squad Limo</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span id="my-name-badge" class="player-badge" style="display: none;"></span>
+      <button id="btn-mute" class="btn-icon" title="Bisukan suara">🔊</button>
+    </div>
+  </header>
+
+  <!-- Kontainer Utama -->
+  <main class="main-content">
+
+    <!-- 1. Layar Masuk Nama (Join Screen) -->
+    <section id="screen-join" class="screen active">
+      <div class="card center-box">
+        <div class="game-intro">
+          <h2>Selamat Datang!</h2>
+          <p>Game word search realtime kolaboratif untuk Squad Limo. Cari kata bersama-sama, saling bantu melawan timer, tanpa ranking!</p>
+        </div>
+        <div class="form-group">
+          <label for="player-name-input">Nama Kamu</label>
+          <input type="text" id="player-name-input" class="input-text" placeholder="Ketik nama panggilanmu..." maxlength="20" autocomplete="off" autofocus>
+        </div>
+        <div id="join-error" style="color: var(--red-urgent); font-size: 0.9rem; margin-bottom: 14px; display: none; font-weight: 600;"></div>
+        <button id="btn-join" class="btn-primary">Gabung ke Game</button>
+      </div>
+    </section>
+
+    <!-- 2. Layar Lobby (Menunggu Host) -->
+    <section id="screen-lobby" class="screen">
+      <div class="card center-box">
+        <div class="lobby-status-pill">⏳ Menunggu Host Memulai Game</div>
+        <div class="player-count-display" id="lobby-player-count">0 Pemain</div>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 8px;">Pemain yang sudah masuk ruang tunggu:</p>
+        <div id="lobby-players-list" class="lobby-players-grid"></div>
+      </div>
+    </section>
+
+    <!-- 3. Layar Game Bermain (Playing Screen) -->
+    <section id="screen-playing" class="screen">
+      <!-- Bar Info Kategori & Timer -->
+      <div class="game-top-bar">
+        <div class="category-info">
+          <span id="category-number-label" class="category-badge">Kategori 1/8</span>
+          <span id="category-title" class="category-title">Nama Kategori</span>
+        </div>
+        <div class="timer-container">
+          <div id="timer-display" class="timer-box">03:00</div>
+        </div>
+      </div>
+
+      <!-- Area Grid & Word List -->
+      <div class="game-workspace">
+        <!-- Papan Word Search -->
+        <div class="board-container">
+          <div id="selection-indicator" class="selection-indicator"></div>
+          <div id="grid-board" class="grid-board"></div>
+        </div>
+
+        <!-- Daftar Kata Samping / Bawah -->
+        <div class="wordlist-container">
+          <div class="wordlist-header">
+            <h3>Daftar Kata</h3>
+            <span id="found-counter" class="found-counter">0 / 9</span>
+          </div>
+          <div id="word-items-list" class="word-items-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Layar Rekap Kategori -->
+    <section id="screen-recap" class="screen">
+      <div class="card recap-box">
+        <div class="recap-hero">
+          <h2 id="recap-category-title" class="recap-title">Rekap Kategori</h2>
+          <div id="recap-highlight" class="recap-highlight">Kita menemukan 0 dari 9 kata!</div>
+        </div>
+        <div id="recap-words-list" class="recap-words-list"></div>
+        <div class="waiting-host-notice">
+          ⏱️ Menunggu Host melanjutkan ke kategori berikutnya...
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Layar Ringkasan Akhir & Penghargaan Lucu -->
+    <section id="screen-final" class="screen">
+      <div class="card recap-box">
+        <h2 class="recap-title" style="margin-bottom: 6px;">🎉 Sesi Selesai! 🎉</h2>
+        <p id="final-score-ratio" style="font-size: 1.15rem; color: var(--text-muted); margin-bottom: 16px; font-weight: 600;"></p>
+
+        <!-- Pesan Perayaan (>= 80%) atau Pesan Semangat (< 80%) -->
+        <div id="celebration-banner" class="celebration-banner"></div>
+
+        <!-- 3 Penghargaan Lucu (Bukan Ranking, Hanya Nama) -->
+        <div class="awards-section">
+          <h3 class="awards-title">🏆 Penghargaan Spesial Tim</h3>
+          <div class="awards-grid">
+            <!-- 1. Si Mata Elang -->
+            <div class="award-card">
+              <div class="award-icon">🦅</div>
+              <h4>Si Mata Elang</h4>
+              <p>Penemu kata terbanyak</p>
+              <div id="award-mata-elang" class="award-names"></div>
+            </div>
+
+            <!-- 2. Penyelamat Detik Terakhir -->
+            <div class="award-card">
+              <div class="award-icon">⚡</div>
+              <h4>Penyelamat Detik Terakhir</h4>
+              <p>Penemu kata di 10 detik terakhir</p>
+              <div id="award-detik-terakhir" class="award-names"></div>
+            </div>
+
+            <!-- 3. Pemburu Kata Panjang -->
+            <div class="award-card">
+              <div class="award-icon">🏹</div>
+              <h4>Pemburu Kata Panjang</h4>
+              <p>Penemu kata terpanjang</p>
+              <div id="award-kata-panjang" class="award-names"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Kontainer Notifikasi Toast -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Script Socket.IO & Game -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

@@ -1,0 +1,342 @@
+/* Stylesheet Khusus untuk Panel Host Word Search Rebutan */
+
+.host-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
+  width: 100%;
+}
+
+.host-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  background: white;
+  padding: 16px 24px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(13, 148, 136, 0.15);
+}
+
+.host-header-bar h2 {
+  color: var(--teal-900);
+  font-size: 1.5rem;
+}
+
+.host-status-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: var(--teal-100);
+  color: var(--teal-800);
+}
+
+.host-grid-layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .host-grid-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.host-section-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--teal-900);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Control Buttons Grid */
+.control-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.btn-host-action {
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-host-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn-start {
+  background: #059669;
+  color: white;
+  grid-column: span 2;
+  font-size: 1.15rem;
+}
+
+.btn-start:hover:not(:disabled) {
+  background: #047857;
+}
+
+.btn-next {
+  background: #0284c7;
+  color: white;
+  grid-column: span 2;
+  font-size: 1.15rem;
+}
+
+.btn-next:hover:not(:disabled) {
+  background: #0369a1;
+}
+
+.btn-hint {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn-hint:hover:not(:disabled) {
+  background: #d97706;
+}
+
+.btn-add-time {
+  background: #14b8a6;
+  color: white;
+}
+
+.btn-add-time:hover:not(:disabled) {
+  background: #0d9488;
+}
+
+.btn-pause {
+  background: #64748b;
+  color: white;
+}
+
+.btn-pause:hover:not(:disabled) {
+  background: #475569;
+}
+
+.btn-skip {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.btn-skip:hover:not(:disabled) {
+  background: #cbd5e1;
+}
+
+.btn-danger-outline {
+  grid-column: span 2;
+  background: white;
+  border: 2px solid #ef4444;
+  color: #ef4444;
+  margin-top: 8px;
+}
+
+.btn-danger-outline:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+/* Category Configuration List */
+.category-config-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.category-config-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--cream-50);
+  border: 1px solid var(--cream-300);
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+}
+
+.category-config-item.disabled {
+  opacity: 0.5;
+  background: #f1f5f9;
+}
+
+.cat-info-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cat-order-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-mini-arrow {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--cream-300);
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-mini-arrow:hover:not(:disabled) {
+  background: var(--teal-100);
+  color: var(--teal-800);
+}
+
+.btn-mini-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Duration Selector */
+.duration-selector {
+  display: flex;
+  gap: 10px;
+  margin: 12px 0 18px 0;
+}
+
+.duration-chip {
+  flex: 1;
+  padding: 10px;
+  border: 2px solid var(--cream-300);
+  background: white;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.duration-chip.selected {
+  border-color: var(--teal-600);
+  background: var(--teal-50);
+  color: var(--teal-800);
+}
+
+/* Estimated Time Box */
+.estimated-time-box {
+  background: var(--cream-200);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  color: var(--teal-900);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  margin-top: 14px;
+}
+
+/* Live Session Status Box */
+.live-status-box {
+  background: var(--teal-900);
+  color: white;
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.live-timer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.live-timer-val {
+  font-family: monospace;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #5eead4;
+}
+
+.live-timer-val.urgent {
+  color: #f87171;
+  animation: pulseUrgent 1s infinite;
+}
+
+/* Player List Table */
+.player-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.player-list-table th,
+.player-list-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--cream-200);
+  font-size: 0.9rem;
+}
+
+.player-list-table th {
+  color: var(--text-muted);
+  font-weight: 700;
+  background: var(--cream-50);
+}
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.status-dot.online {
+  background: #10b981;
+}
+
+.status-dot.offline {
+  background: #94a3b8;
+}
+
+/* Log box */
+.activity-log-box {
+  background: var(--cream-50);
+  border: 1px solid var(--cream-300);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  max-height: 160px;
+  overflow-y: auto;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.log-entry {
+  color: var(--text-dark);
+}
+
+.log-time {
+  color: var(--text-muted);
+  font-family: monospace;
+  margin-right: 6px;
+}

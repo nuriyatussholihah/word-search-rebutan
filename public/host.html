@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Host - Word Search Rebutan</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/host.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👑</text></svg>">
+</head>
+<body>
+
+  <!-- Overlay Autentikasi PIN Host -->
+  <div id="host-auth-overlay" style="position: fixed; inset: 0; background: rgba(15, 118, 110, 0.95); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div class="card center-box" style="margin: 0; max-width: 400px;">
+      <div style="font-size: 3rem; margin-bottom: 12px;">👑</div>
+      <h2 style="color: var(--teal-900); margin-bottom: 8px;">Panel Host</h2>
+      <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">Masukkan PIN Host untuk mengontrol sesi Word Search Rebutan.</p>
+      <div class="form-group">
+        <label for="host-pin-input">PIN Host</label>
+        <input type="password" id="host-pin-input" class="input-text" placeholder="Masukkan PIN..." autofocus>
+      </div>
+      <div id="auth-error" style="color: var(--red-urgent); font-size: 0.9rem; margin-bottom: 14px; display: none; font-weight: 600;"></div>
+      <button id="btn-auth" class="btn-primary">Masuk ke Panel Host</button>
+      <p style="margin-top: 14px; font-size: 0.8rem; color: var(--text-muted);">Default PIN: <code>limo123</code> (bisa diubah di config.js)</p>
+    </div>
+  </div>
+
+  <!-- Dashboard Host Utama -->
+  <div id="host-dashboard" class="host-container" style="display: none;">
+
+    <!-- Bar Header Host -->
+    <div class="host-header-bar">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 1.8rem;">👑</span>
+        <div>
+          <h2>Panel Kontrol Host</h2>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Word Search Rebutan Squad Limo</p>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span id="host-status-badge" class="host-status-badge">LOBBY</span>
+        <a href="/" target="_blank" class="btn-secondary" style="text-decoration: none;">Buka Layar Pemain ↗</a>
+      </div>
+    </div>
+
+    <!-- Layout 2 Kolom -->
+    <div class="host-grid-layout">
+
+      <!-- Kolom Kiri: Status Live & Kontrol Tombol -->
+      <div>
+        <!-- Live Status Box -->
+        <div class="live-status-box">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <span id="live-category-progress" style="font-size: 0.8rem; color: #5eead4; font-weight: 700; text-transform: uppercase;">Menunggu</span>
+              <h3 id="live-category-name" style="font-size: 1.4rem; margin-top: 4px;">Lobby Sesi</h3>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-size: 0.75rem; color: #ccfbf1;">Kata Ketemu</span>
+              <div id="live-found-count" style="font-size: 1.3rem; font-weight: 800; color: #5eead4;">0 / 9</div>
+            </div>
+          </div>
+          <div class="live-timer-row">
+            <span style="font-size: 0.9rem; color: #ccfbf1;">Sisa Waktu:</span>
+            <div id="live-timer" class="live-timer-val">03:00</div>
+          </div>
+        </div>
+
+        <!-- Tombol Kontrol Game -->
+        <div class="card" style="margin-bottom: 20px;">
+          <h3 class="host-section-title">Kontrol Game</h3>
+          <div class="control-buttons-grid">
+            <!-- Mulai Kategori (di Lobby) -->
+            <button id="btn-start-category" class="btn-host-action btn-start">
+              ▶️ Mulai Kategori
+            </button>
+
+            <!-- Kategori Berikutnya (di Rekap) -->
+            <button id="btn-next-category" class="btn-host-action btn-next" style="display: none;">
+              ⏭️ Kategori Berikutnya
+            </button>
+
+            <!-- Hint (Maksimal 1x per kategori) -->
+            <button id="btn-hint" class="btn-host-action btn-hint" title="Buka huruf pertama satu kata yang belum ketemu (maks 1x)">
+              💡 Hint (1x)
+            </button>
+
+            <!-- Tambah 30 Detik -->
+            <button id="btn-add-time" class="btn-host-action btn-add-time" title="Tambah 30 detik ke timer">
+              ⏱️ +30 Detik
+            </button>
+
+            <!-- Pause / Resume -->
+            <button id="btn-pause-resume" class="btn-host-action btn-pause">
+              ⏸️ Pause
+            </button>
+
+            <!-- Skip Kategori -->
+            <button id="btn-skip-category" class="btn-host-action btn-skip" title="Lewati kategori yang sedang berjalan">
+              ⏩ Skip
+            </button>
+
+            <!-- Akhiri Sesi Sekarang -->
+            <button id="btn-end-session" class="btn-host-action btn-danger-outline" title="Langsung tampilkan ringkasan akhir dari kategori yang sudah dimainkan">
+              🛑 Akhiri Sesi Sekarang
+            </button>
+          </div>
+        </div>
+
+        <!-- Log Aktivitas Realtime -->
+        <div class="card">
+          <h3 class="host-section-title">Log Realtime</h3>
+          <div id="activity-log" class="activity-log-box"></div>
+        </div>
+      </div>
+
+      <!-- Kolom Kanan: Pengaturan Sesi & Daftar Pemain -->
+      <div>
+        <!-- Pengaturan Sesi (Sebelum Mulai di Lobby) -->
+        <div id="config-section" class="card" style="margin-bottom: 20px;">
+          <h3 class="host-section-title">
+            Pengaturan Sesi
+            <span style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);">(Sebelum mulai)</span>
+          </h3>
+
+          <label style="font-size: 0.9rem; font-weight: 700; color: var(--teal-900);">Durasi per Kategori:</label>
+          <div id="duration-chips" class="duration-selector"></div>
+
+          <label style="font-size: 0.9rem; font-weight: 700; color: var(--teal-900); display: block; margin-top: 16px;">
+            Pilihan & Urutan Kategori (Centang & Atur Posisi):
+          </label>
+          <div id="category-config-list" class="category-config-list"></div>
+
+          <!-- Estimasi Durasi Total Sesi -->
+          <div class="estimated-time-box">
+            <span>Perkiraan Total Durasi Sesi:</span>
+            <span id="estimated-time-display" style="font-size: 1.15rem; color: var(--teal-800);">±39 Menit</span>
+          </div>
+        </div>
+
+        <!-- Daftar Pemain Masuk -->
+        <div class="card">
+          <div class="host-section-title">
+            <span>Daftar Pemain</span>
+            <span id="host-player-count-badge" class="found-counter">0 Online</span>
+          </div>
+          <table class="player-list-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;">#</th>
+                <th>Nama Pemain</th>
+                <th style="width: 100px;">Kata Ketemu</th>
+              </tr>
+            </thead>
+            <tbody id="host-player-table-body">
+              <tr>
+                <td colspan="3" style="text-align: center; color: var(--text-muted);">Menunggu pemain bergabung...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Script Socket.IO & Host -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/host.js"></script>
+</body>
+</html>
