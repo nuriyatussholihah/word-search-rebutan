@@ -927,13 +927,11 @@
     cells.forEach(p => {
       forward += warmupGrid[p.r][p.c];
     });
-    const backward = forward.split('').reverse().join('');
 
+    // Hanya terima arah drag yang benar (tidak boleh kebalik)
     let matched = null;
     if (warmupWords.includes(forward) && !warmupFoundWords.includes(forward)) {
       matched = forward;
-    } else if (warmupWords.includes(backward) && !warmupFoundWords.includes(backward)) {
-      matched = backward;
     }
 
     if (matched) {

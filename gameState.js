@@ -420,18 +420,14 @@ class GameManager {
     }
 
     const wordForward = getWordFromCells(this.grid, cells);
-    const wordBackward = wordForward.split('').reverse().join('');
 
-    // Cek apakah forward atau backward cocok dengan salah satu kata di kategori
+    // Cek apakah kata cocok HANYA dalam arah drag (tidak boleh kebalik)
     let matchedWord = null;
     let finalCells = cells;
 
     if (this.currentCategory.words.includes(wordForward)) {
       matchedWord = wordForward;
       finalCells = cells;
-    } else if (this.currentCategory.words.includes(wordBackward)) {
-      matchedWord = wordBackward;
-      finalCells = [...cells].reverse();
     }
 
     if (!matchedWord) {
