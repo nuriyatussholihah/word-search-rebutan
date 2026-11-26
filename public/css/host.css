@@ -5,6 +5,7 @@
   margin: 0 auto;
   padding: 20px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .host-header-bar {
@@ -450,4 +451,206 @@
   color: var(--text-muted);
   font-family: monospace;
   margin-right: 6px;
+}
+
+/* ==================== MOBILE RESPONSIVE HOST ==================== */
+
+@media (max-width: 768px) {
+  .host-container {
+    padding: 10px;
+  }
+
+  .host-header-bar {
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+
+  .host-header-bar > div {
+    justify-content: center !important;
+    flex-wrap: wrap;
+  }
+
+  .host-header-bar h2 {
+    font-size: 1.15rem;
+  }
+
+  .host-header-bar .btn-secondary {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+  }
+
+  .host-status-badge {
+    font-size: 0.78rem;
+    padding: 4px 10px;
+  }
+
+  .host-grid-layout {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .live-status-box {
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+
+  .live-status-box h3 {
+    font-size: 1.15rem !important;
+  }
+
+  .live-timer-val {
+    font-size: 1.6rem;
+  }
+
+  .card {
+    padding: 14px;
+  }
+
+  .host-section-title {
+    font-size: 1rem;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Control Buttons: 2-col on mobile, full-width for span-2 items */
+  .control-buttons-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .btn-host-action {
+    padding: 10px 8px;
+    font-size: 0.85rem;
+    gap: 4px;
+  }
+
+  .btn-start,
+  .btn-next,
+  .btn-danger-outline,
+  .btn-reset {
+    grid-column: span 2;
+    font-size: 0.95rem;
+  }
+
+  /* Duration & Difficulty chips responsive */
+  .duration-selector {
+    gap: 6px;
+    margin: 8px 0 12px 0;
+    flex-wrap: wrap;
+  }
+
+  .duration-chip {
+    padding: 8px 6px;
+    font-size: 0.82rem;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  /* Category config list */
+  .category-config-item {
+    padding: 8px 10px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .cat-info-left {
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cat-info-left label {
+    font-size: 0.82rem;
+  }
+
+  .btn-mini-arrow {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+  }
+
+  .estimated-time-box {
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+    font-size: 0.85rem;
+    padding: 10px;
+  }
+
+  /* Player list table */
+  .player-list-table th,
+  .player-list-table td {
+    padding: 8px 6px;
+    font-size: 0.82rem;
+  }
+
+  /* Activity log */
+  .activity-log-box {
+    padding: 8px;
+    max-height: 120px;
+    font-size: 0.78rem;
+  }
+
+  /* Answer key card */
+  .host-answer-words-grid {
+    max-height: 180px;
+  }
+
+  .host-answer-item {
+    padding: 6px 8px;
+    font-size: 0.82rem;
+  }
+
+  .host-mini-grid {
+    max-width: 260px !important;
+  }
+
+  .host-mini-grid .grid-cell {
+    font-size: 0.65rem !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .host-container {
+    padding: 6px;
+  }
+
+  .host-header-bar {
+    padding: 10px;
+  }
+
+  .host-header-bar h2 {
+    font-size: 1rem;
+  }
+
+  .control-buttons-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-start,
+  .btn-next,
+  .btn-danger-outline,
+  .btn-reset {
+    grid-column: span 1;
+  }
+
+  .btn-host-action {
+    padding: 12px 8px;
+    font-size: 0.9rem;
+  }
+
+  .duration-chip {
+    font-size: 0.78rem;
+    padding: 7px 4px;
+  }
+
+  .live-timer-val {
+    font-size: 1.3rem;
+  }
+
+  .host-mini-grid {
+    max-width: 220px !important;
+  }
 }
