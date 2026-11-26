@@ -105,6 +105,26 @@
             <button id="btn-end-session" class="btn-host-action btn-danger-outline" title="Langsung tampilkan ringkasan akhir dari kategori yang sudah dimainkan">
               🛑 Akhiri Sesi Sekarang
             </button>
+
+            <!-- Reset Sesi ke Awal (Lobby) -->
+            <button id="btn-reset-session" class="btn-host-action btn-reset" title="Mulai ulang sesi dari awal kembali ke Ruang Tunggu">
+              🔄 Reset Sesi ke Awal
+            </button>
+          </div>
+        </div>
+
+        <!-- Box Kunci Jawaban Host -->
+        <div id="host-answer-key-card" class="card" style="margin-bottom: 20px; display: none;">
+          <div class="host-section-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span>🔍 Kunci Jawaban (Khusus Host)</span>
+            <button id="btn-toggle-answer-grid" class="btn-secondary btn-sm" style="font-size: 0.8rem; padding: 4px 10px;">👁️ Buka Papan Kunci</button>
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 10px;">
+            Rahasia untuk Host! Klik salah satu kata untuk melihat posisinya di papan:
+          </p>
+          <div id="host-answer-words-list" class="host-answer-words-grid"></div>
+          <div id="host-answer-grid-container" style="display: none; margin-top: 14px;">
+            <div id="host-answer-grid" class="grid-board host-mini-grid"></div>
           </div>
         </div>
 
@@ -117,18 +137,30 @@
 
       <!-- Kolom Kanan: Pengaturan Sesi & Daftar Pemain -->
       <div>
-        <!-- Pengaturan Sesi (Sebelum Mulai di Lobby) -->
+        <!-- Pengaturan Sesi (Bisa diatur di Lobby & saat Rekap) -->
         <div id="config-section" class="card" style="margin-bottom: 20px;">
           <h3 class="host-section-title">
             Pengaturan Sesi
-            <span style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);">(Sebelum mulai)</span>
+            <span id="config-status-label" style="font-size: 0.8rem; font-weight: 500; color: #0d9488;">(Aktif di Lobby & saat Rekap)</span>
           </h3>
 
           <label style="font-size: 0.9rem; font-weight: 700; color: var(--teal-900);">Durasi per Kategori:</label>
           <div id="duration-chips" class="duration-selector"></div>
 
+          <label style="font-size: 0.9rem; font-weight: 700; color: var(--teal-900); display: block; margin-top: 14px;">
+            Level Kesulitan Kata:
+          </label>
+          <div id="difficulty-chips" class="duration-selector">
+            <div class="duration-chip" data-diff="easy">🟢 Mudah</div>
+            <div class="duration-chip selected" data-diff="medium">🟡 Sedang</div>
+            <div class="duration-chip" data-diff="hard">🔴 Sulit</div>
+          </div>
+          <p id="difficulty-desc" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 0;">
+            🟡 Sedang: Horizontal (maju/mundur), Vertikal (maju/mundur) &amp; Diagonal turun maju.
+          </p>
+
           <label style="font-size: 0.9rem; font-weight: 700; color: var(--teal-900); display: block; margin-top: 16px;">
-            Pilihan & Urutan Kategori (Centang & Atur Posisi):
+            Pilihan &amp; Urutan Kategori (Centang &amp; Atur Posisi):
           </label>
           <div id="category-config-list" class="category-config-list"></div>
 

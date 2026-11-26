@@ -113,10 +113,21 @@ io.on('connection', (socket) => {
         categories: categories,
         selectedCategoryIds: game.selectedCategoryIds,
         durationMinutes: game.durationMinutes,
+        difficulty: game.difficulty,
         estimatedMinutes: game.getEstimatedDurationMinutes(),
         history: game.history,
         finalSummary: game.status === 'FINAL_SUMMARY' ? game.calculateFinalSummary() : null
       });
+
+      // Jika game sedang berlangsung, langsung kirimkan kunci jawaban ke Host
+      if (game.status === 'PLAYING' && game.placedWords) {
+        socket.emit('host_answer_key', {
+          placedWords: game.placedWords,
+          grid: game.grid,
+          categoryName: game.currentCategory ? game.currentCategory.name : '',
+          difficulty: game.difficulty
+        });
+      }
     } else {
       socket.emit('host_auth_failed', { message: 'PIN Host salah! Silakan coba lagi.' });
     }
@@ -170,6 +181,13 @@ io.on('connection', (socket) => {
   socket.on('host_end_session', () => {
     if (!isHostAuthenticated) return;
     game.finishSession();
+  });
+
+  // 13. Host Reset Sesi ke Lobby
+  socket.on('host_reset_session', () => {
+    if (!isHostAuthenticated) return;
+    const result = game.resetSession();
+    socket.emit('host_action_result', result);
   });
 
   // Disconnect handler

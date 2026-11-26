@@ -14,6 +14,22 @@ const DIRECTIONS = [
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
+// Pemetaan arah berdasarkan tingkat kesulitan
+const DIFFICULTY_DIRECTIONS = {
+  easy: [
+    { dr: 0, dc: 1, name: 'horizontal-kanan' },
+    { dr: 1, dc: 0, name: 'vertikal-bawah' }
+  ],
+  medium: [
+    { dr: 0, dc: 1, name: 'horizontal-kanan' },
+    { dr: 0, dc: -1, name: 'horizontal-kiri' },
+    { dr: 1, dc: 0, name: 'vertikal-bawah' },
+    { dr: -1, dc: 0, name: 'vertikal-atas' },
+    { dr: 1, dc: 1, name: 'diagonal-turun-kanan' }
+  ],
+  hard: DIRECTIONS
+};
+
 /**
  * Menghitung sel di antara koordinat awal dan akhir jika membentuk garis lurus 8 arah.
  * Mengembalikan array [{r, c}] atau null jika tidak lurus.
@@ -107,7 +123,8 @@ function placeWord(grid, word, startR, startC, dir) {
     cells,
     start: { r: startR, c: startC },
     end: { r: startR + (word.length - 1) * dir.dr, c: startC + (word.length - 1) * dir.dc },
-    dirName: dir.name
+    dirName: dir.name,
+    direction: dir
   };
 }
 
@@ -126,8 +143,9 @@ function shuffleArray(arr) {
  * Mencoba membuat grid dengan semua kata muat tanpa ada yang hilang.
  * Mengulang sampai 100 kali jika perlu, menjamin 100% semua kata terpasang.
  */
-function generateGrid(words, size = 15) {
+function generateGrid(words, size = 15, difficulty = 'medium') {
   const maxAttempts = 150;
+  const availableDirs = DIFFICULTY_DIRECTIONS[difficulty] || DIRECTIONS;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     // Buat grid kosong ukuran size x size
@@ -150,7 +168,7 @@ function generateGrid(words, size = 15) {
       }
       shuffleArray(positions);
 
-      const dirs = [...DIRECTIONS];
+      const dirs = [...availableDirs];
       shuffleArray(dirs);
 
       // Cari posisi dan arah yang valid
@@ -194,6 +212,7 @@ function generateGrid(words, size = 15) {
 
 module.exports = {
   DIRECTIONS,
+  DIFFICULTY_DIRECTIONS,
   getCellsBetween,
   getWordFromCells,
   generateGrid

@@ -32,6 +32,7 @@
 
   // Elemen Playing
   const categoryNumberLabel = document.getElementById('category-number-label');
+  const categoryDifficultyBadge = document.getElementById('category-difficulty-badge');
   const categoryTitle = document.getElementById('category-title');
   const timerDisplay = document.getElementById('timer-display');
   const gridBoard = document.getElementById('grid-board');
@@ -194,6 +195,15 @@
     showToast(`Kategori ${state.category.number}: ${state.category.name} dimulai!`);
   });
 
+  // Reset Sesi oleh Host ke Ruang Tunggu
+  socket.on('session_reset', (state) => {
+    currentGameState = state;
+    clearTapSelection();
+    showScreen('lobby');
+    initWarmup(true);
+    showToast('🔄 Host telah me-reset sesi kembali ke Ruang Tunggu!');
+  });
+
   // Timer Tick
   socket.on('timer_tick', (data) => {
     if (!currentGameState) return;
@@ -222,6 +232,23 @@
 
     categoryNumberLabel.textContent = `Kategori ${state.category.number} dari ${state.category.total}`;
     categoryTitle.textContent = state.category.name;
+
+    // Tampilkan label tingkat kesulitan
+    const diff = state.difficulty || (state.category && state.category.difficulty) || 'medium';
+    if (categoryDifficultyBadge) {
+      categoryDifficultyBadge.style.display = 'inline-block';
+      if (diff === 'easy') {
+        categoryDifficultyBadge.textContent = '🟢 Mudah';
+        categoryDifficultyBadge.style.backgroundColor = '#16a34a';
+      } else if (diff === 'hard') {
+        categoryDifficultyBadge.textContent = '🔴 Sulit';
+        categoryDifficultyBadge.style.backgroundColor = '#dc2626';
+      } else {
+        categoryDifficultyBadge.textContent = '🟡 Sedang';
+        categoryDifficultyBadge.style.backgroundColor = '#d97706';
+      }
+    }
+
     updateTimerDisplay(state.timer.remainingSeconds, state.timer.isPaused);
 
     renderGrid(state.grid, state.foundWords, state.hintData);

@@ -32,6 +32,7 @@ class GameManager {
     this.selectedCategoryIds = defaultCategories.map(c => c.id); // default semua 8
     this.durationMinutes = 3; // default 3 menit
     this.durationSeconds = 180;
+    this.difficulty = 'medium'; // default sedang ('easy' | 'medium' | 'hard')
 
     // Kategori yang sedang aktif
     this.currentCategoryIndex = -1; // index dalam array kategori terpilih
@@ -55,12 +56,19 @@ class GameManager {
   // ===================== PENGATURAN SESI (HOST) =====================
 
   configureSession(settings) {
-    if (this.status !== 'LOBBY') return { success: false, message: 'Game sudah berjalan' };
+    if (this.status !== 'LOBBY' && this.status !== 'CATEGORY_RECAP') {
+      return { success: false, message: 'Pengaturan hanya bisa diubah saat di Lobby atau saat Rekap Kategori' };
+    }
 
     // Validasi durasi
     if (settings.durationMinutes && config.DURATION_OPTIONS_MINUTES.includes(Number(settings.durationMinutes))) {
       this.durationMinutes = Number(settings.durationMinutes);
       this.durationSeconds = this.durationMinutes * 60;
+    }
+
+    // Validasi tingkat kesulitan (easy, medium, hard)
+    if (settings.difficulty && ['easy', 'medium', 'hard'].includes(settings.difficulty)) {
+      this.difficulty = settings.difficulty;
     }
 
     // Validasi urutan & pilihan kategori (1 sampai 8 kategori)
@@ -73,7 +81,13 @@ class GameManager {
     }
 
     this.broadcastSessionConfig();
-    return { success: true };
+    return {
+      success: true,
+      durationMinutes: this.durationMinutes,
+      difficulty: this.difficulty,
+      selectedCategoryIds: this.selectedCategoryIds,
+      estimatedMinutes: this.getEstimatedDurationMinutes()
+    };
   }
 
   getEstimatedDurationMinutes() {
@@ -83,8 +97,9 @@ class GameManager {
 
   broadcastSessionConfig() {
     this.io.emit('session_config_updated', {
-      selectedCategoryIds: this.selectedCategoryIds,
       durationMinutes: this.durationMinutes,
+      difficulty: this.difficulty,
+      selectedCategoryIds: this.selectedCategoryIds,
       estimatedMinutes: this.getEstimatedDurationMinutes()
     });
   }
@@ -197,8 +212,8 @@ class GameManager {
     this.hintUsed = false;
     this.hintData = null;
 
-    // Generate grid 15x15 di server
-    const { grid, placedWords } = generateGrid(categoryInfo.words, config.GRID_SIZE);
+    // Generate grid 15x15 di server dengan level kesulitan terpilih
+    const { grid, placedWords } = generateGrid(categoryInfo.words, config.GRID_SIZE, this.difficulty);
     this.grid = grid;
     this.placedWords = placedWords;
 
@@ -211,6 +226,19 @@ class GameManager {
 
     // Broadcast ke semua pemain
     this.io.emit('category_started', this.getPublicGameState());
+
+    // Kirim kunci jawaban khusus ke host room
+    const hostPayload = {
+      placedWords: this.placedWords,
+      grid: this.grid,
+      categoryName: categoryInfo.name,
+      difficulty: this.difficulty
+    };
+    if (this.io.to) {
+      this.io.to('host_room').emit('host_answer_key', hostPayload);
+    } else {
+      this.io.emit('host_answer_key', hostPayload);
+    }
   }
 
   startTimer() {
@@ -340,6 +368,38 @@ class GameManager {
 
     const finalSummary = this.calculateFinalSummary();
     this.io.emit('session_finished', finalSummary);
+  }
+
+  resetSession() {
+    this.stopTimer();
+    this.status = 'LOBBY';
+    this.currentCategoryIndex = -1;
+    this.currentCategory = null;
+    this.grid = null;
+    this.placedWords = {};
+    this.foundWords = [];
+    this.hintUsed = false;
+    this.hintData = null;
+    this.remainingSeconds = this.durationSeconds;
+    this.isPaused = false;
+    this.history = [];
+
+    // Reset kata yang ditemukan pemain tapi biarkan pemain tetap terdaftar di lobby
+    this.players.forEach(player => {
+      player.wordsFound = [];
+    });
+
+    const publicState = this.getPublicGameState();
+    this.io.emit('session_reset', publicState);
+    this.io.emit('player_list_updated', {
+      count: this.getPlayerList().length,
+      players: this.getPlayerList()
+    });
+    this.io.emit('notification', {
+      message: 'Sesi permainan telah di-reset oleh Host kembali ke Ruang Tunggu.'
+    });
+
+    return { success: true, message: 'Sesi berhasil di-reset ke Ruang Tunggu' };
   }
 
   // ===================== VALIDASI KATA DARI PEMAIN =====================
@@ -542,6 +602,7 @@ class GameManager {
         index: this.currentCategoryIndex,
         number: currentNumber,
         total: totalSelected,
+        difficulty: this.difficulty,
         words: this.currentCategory.words.map(w => ({
           word: w,
           length: w.length,
@@ -554,6 +615,7 @@ class GameManager {
 
     return {
       status: this.status,
+      difficulty: this.difficulty,
       category: categoryPayload,
       grid: this.grid,
       foundWords: this.foundWords,

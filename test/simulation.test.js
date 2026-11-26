@@ -184,10 +184,44 @@ async function runTests() {
     assert.strictEqual(/\d/.test(name), false, `Nama "${name}" tidak boleh mengandung angka`);
   });
 
+  // 10. Test Reset Sesi ke Lobby
+  console.log('\n--- Test 10: Reset Sesi ke Lobby ---');
+  assert.strictEqual(game.status, 'FINAL_SUMMARY');
+  const resetResult = game.resetSession();
+  assert.strictEqual(resetResult.success, true);
+  assert.strictEqual(game.status, 'LOBBY');
+  assert.strictEqual(game.getPlayerList().length, 3, 'Pemain harus tetap ada di lobby setelah reset');
+  console.log('✓ Reset sesi berhasil mengembalikan status ke LOBBY dengan pemain tetap terdaftar');
+
+  // 11. Test Tingkat Kesulitan (Easy, Medium, Hard)
+  console.log('\n--- Test 11: Pengaturan Tingkat Kesulitan ---');
+  game.configureSession({ difficulty: 'easy', durationMinutes: 2 });
+  assert.strictEqual(game.difficulty, 'easy');
+  game.startCategory(0);
+  assert.strictEqual(game.status, 'PLAYING');
+  assert.strictEqual(game.difficulty, 'easy');
+  // Pastikan kata ditempatkan sesuai arah easy (hanya horizontal kanan dan vertikal bawah)
+  Object.keys(game.placedWords).forEach(w => {
+    const p = game.placedWords[w];
+    assert.ok(p.direction.name === 'horizontal-kanan' || p.direction.name === 'vertikal-bawah',
+      `Kata "${w}" harus di arah easy, didapat ${p.direction.name}`);
+  });
+  console.log('✓ Grid tingkat kesulitan "easy" berhasil membatasi arah ke horizontal kanan & vertikal bawah');
+
+  // 12. Test Re-konfigurasi saat Rekap Kategori
+  console.log('\n--- Test 12: Re-konfigurasi saat Rekap Kategori ---');
+  game.endCurrentCategory('Selesai untuk uji rekap');
+  assert.strictEqual(game.status, 'CATEGORY_RECAP');
+  const recapConfig = game.configureSession({ difficulty: 'hard', durationMinutes: 4 });
+  assert.strictEqual(recapConfig.success, true);
+  assert.strictEqual(game.difficulty, 'hard');
+  assert.strictEqual(game.durationMinutes, 4);
+  console.log('✓ Host berhasil mengubah pengaturan durasi dan tingkat kesulitan saat Rekap Kategori');
+
   game.stopTimer();
 
   console.log('\n===============================================');
-  console.log('SEMUA 9 UJI COBA OTOMATIS BERHASIL DENGAN SUKSES! 🎉');
+  console.log('SEMUA 12 UJI COBA OTOMATIS BERHASIL DENGAN SUKSES! 🎉');
   console.log('===============================================');
 }
 
