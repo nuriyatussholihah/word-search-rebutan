@@ -155,6 +155,7 @@
 
     if (state.status === 'LOBBY') {
       showScreen('lobby');
+      initWarmup();
     } else if (state.status === 'PLAYING') {
       showScreen('playing');
       renderPlayingScreen(state);
@@ -187,6 +188,7 @@
   // Mulai Kategori Baru
   socket.on('category_started', (state) => {
     currentGameState = state;
+    clearTapSelection();
     showScreen('playing');
     renderPlayingScreen(state);
     showToast(`Kategori ${state.category.number}: ${state.category.name} dimulai!`);
@@ -444,6 +446,11 @@
     gridBoard.querySelectorAll('.grid-cell.selected').forEach(c => c.classList.remove('selected'));
 
     if (!isDragging || !dragStart || !dragCurrent) {
+      if (tapFirstCell) {
+        const cell = gridBoard.querySelector(`[data-r="${tapFirstCell.r}"][data-c="${tapFirstCell.c}"]`);
+        if (cell) cell.classList.add('selected');
+        return;
+      }
       selectionIndicator.textContent = '';
       selectionIndicator.classList.remove('active');
       activeSelectedCells = [];
@@ -470,6 +477,49 @@
     }
   }
 
+  // --- DUKUNGAN TAP: KLIK HURUF AWAL LALU KLIK HURUF AKHIR ---
+  let tapFirstCell = null;
+
+  function clearTapSelection() {
+    tapFirstCell = null;
+    gridBoard.querySelectorAll('.grid-cell.selected').forEach(c => c.classList.remove('selected'));
+    selectionIndicator.textContent = '';
+    selectionIndicator.classList.remove('active');
+    activeSelectedCells = [];
+  }
+
+  function handleCellTap(coords) {
+    if (!coords) return;
+
+    // Jika belum ada huruf awal yang dipilih:
+    if (!tapFirstCell) {
+      tapFirstCell = coords;
+      const cell = gridBoard.querySelector(`[data-r="${coords.r}"][data-c="${coords.c}"]`);
+      if (cell) cell.classList.add('selected');
+      const char = cell ? cell.textContent.trim() : '';
+      selectionIndicator.textContent = `${char} (Tap huruf akhir...)`;
+      selectionIndicator.classList.add('active');
+      return;
+    }
+
+    // Jika mengetuk sel yang sama lagi -> batalkan pilihan
+    if (tapFirstCell.r === coords.r && tapFirstCell.c === coords.c) {
+      clearTapSelection();
+      return;
+    }
+
+    // Hitung garis lurus dari huruf awal ke huruf akhir yang di-tap
+    const cells = calculateLineCells(tapFirstCell, coords);
+    if (cells && cells.length >= 2) {
+      activeSelectedCells = cells;
+      updateDragVisuals();
+      const start = cells[0];
+      const end = cells[cells.length - 1];
+      socket.emit('submit_word', { start, end });
+    }
+    clearTapSelection();
+  }
+
   function submitDragSelection() {
     if (!isDragging) return;
     isDragging = false;
@@ -477,10 +527,10 @@
     if (activeSelectedCells.length >= 2) {
       const start = activeSelectedCells[0];
       const end = activeSelectedCells[activeSelectedCells.length - 1];
-
       socket.emit('submit_word', { start, end });
     }
 
+    tapFirstCell = null;
     dragStart = null;
     dragCurrent = null;
     activeSelectedCells = [];
@@ -502,18 +552,32 @@
     const cellUnderMouse = document.elementFromPoint(e.clientX, e.clientY);
     const coords = getCellCoords(cellUnderMouse);
     if (coords && (coords.r !== dragCurrent.r || coords.c !== dragCurrent.c)) {
+      if (tapFirstCell && (coords.r !== dragStart.r || coords.c !== dragStart.c)) {
+        tapFirstCell = null;
+      }
       dragCurrent = coords;
       updateDragVisuals();
     }
   });
 
   window.addEventListener('mouseup', () => {
-    if (isDragging) submitDragSelection();
+    if (isDragging) {
+      if (!activeSelectedCells || activeSelectedCells.length <= 1) {
+        handleCellTap(dragStart);
+        isDragging = false;
+        dragStart = null;
+        dragCurrent = null;
+        return;
+      }
+      submitDragSelection();
+    }
   });
 
   // --- TOUCH EVENTS UNTUK MOBILE ---
   gridBoard.addEventListener('touchstart', (e) => {
     if (e.touches.length !== 1) return;
+    e.preventDefault(); // Mencegah emulasi mouse event, gesture zoom, dan touchcancel liar!
+
     const touch = e.touches[0];
     const cellUnderTouch = document.elementFromPoint(touch.clientX, touch.clientY);
     const coords = getCellCoords(cellUnderTouch);
@@ -525,26 +589,36 @@
     updateDragVisuals();
   }, { passive: false });
 
-  gridBoard.addEventListener('touchmove', (e) => {
+  window.addEventListener('touchmove', (e) => {
     if (!isDragging || e.touches.length !== 1) return;
-    e.preventDefault(); // Sangat penting: mencegah scroll halaman saat drag kata di HP!
+    e.preventDefault(); // Mencegah scroll halaman saat drag kata di HP!
 
     const touch = e.touches[0];
     const cellUnderTouch = document.elementFromPoint(touch.clientX, touch.clientY);
     const coords = getCellCoords(cellUnderTouch);
     if (coords && (!dragCurrent || coords.r !== dragCurrent.r || coords.c !== dragCurrent.c)) {
+      if (tapFirstCell && (coords.r !== dragStart.r || coords.c !== dragStart.c)) {
+        tapFirstCell = null;
+      }
       dragCurrent = coords;
       updateDragVisuals();
     }
   }, { passive: false });
 
-  gridBoard.addEventListener('touchend', (e) => {
+  window.addEventListener('touchend', (e) => {
     if (isDragging) {
+      if (!activeSelectedCells || activeSelectedCells.length <= 1) {
+        handleCellTap(dragStart);
+        isDragging = false;
+        dragStart = null;
+        dragCurrent = null;
+        return;
+      }
       submitDragSelection();
     }
   });
 
-  gridBoard.addEventListener('touchcancel', () => {
+  window.addEventListener('touchcancel', () => {
     if (isDragging) {
       isDragging = false;
       dragStart = null;
@@ -554,9 +628,20 @@
     }
   });
 
+  // Feedback jika kata ditolak / berhasil dari server
+  socket.on('submit_word_result', (result) => {
+    if (!result.success) {
+      showToast(`❌ ${result.message || 'Kata tidak valid'}`);
+      if (window.sounds && window.sounds.playError) {
+        window.sounds.playError();
+      }
+    }
+  });
+
   // ===================== RECAP KATEGORI =====================
 
   socket.on('category_ended', (recapData) => {
+    clearTapSelection();
     showScreen('recap');
     renderRecapScreen(recapData);
   });
@@ -631,6 +716,383 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+  // ===================== PEMANASAN DI LOBBY (MINI GAME) =====================
+  const WARMUP_SETS = [
+    ['KOPI', 'SQUAD', 'LIMO'],
+    ['WFH', 'FOKUS', 'SANTAI'],
+    ['KERJA', 'SERU', 'TIM'],
+    ['CHAT', 'SHARE', 'MEET']
+  ];
+  const WARMUP_COLORS = ['#0284c7', '#16a34a', '#ea580c', '#9333ea'];
+  let warmupSetIndex = 0;
+  let warmupGrid = null;
+  let warmupWords = [];
+  let warmupFoundWords = [];
+  let warmupIsDragging = false;
+  let warmupDragStart = null;
+  let warmupDragCurrent = null;
+  let warmupActiveCells = [];
+  let warmupTapFirstCell = null;
+  let warmupInitialized = false;
+
+  const warmupGridBoard = document.getElementById('warmup-grid-board');
+  const warmupTargets = document.getElementById('warmup-targets');
+  const warmupSelectionIndicator = document.getElementById('warmup-selection-indicator');
+  const warmupCompletion = document.getElementById('warmup-completion');
+  const btnWarmupReset = document.getElementById('btn-warmup-reset');
+
+  function initWarmup(forceReset = false) {
+    if (!warmupGridBoard) return;
+    if (warmupInitialized && !forceReset) return;
+    warmupInitialized = true;
+
+    warmupWords = WARMUP_SETS[warmupSetIndex];
+    warmupFoundWords = [];
+    warmupTapFirstCell = null;
+    warmupIsDragging = false;
+    warmupActiveCells = [];
+    if (warmupCompletion) warmupCompletion.style.display = 'none';
+
+    // Render target pills
+    if (warmupTargets) {
+      warmupTargets.innerHTML = '';
+      warmupWords.forEach(w => {
+        const pill = document.createElement('span');
+        pill.className = 'warmup-target-pill';
+        pill.dataset.word = w;
+        pill.textContent = w;
+        warmupTargets.appendChild(pill);
+      });
+    }
+
+    if (warmupSelectionIndicator) {
+      warmupSelectionIndicator.textContent = '';
+      warmupSelectionIndicator.classList.remove('active');
+    }
+
+    // Generate 6x6 grid
+    warmupGrid = generateWarmupGrid(warmupWords, 6);
+    renderWarmupGrid(warmupGrid);
+  }
+
+  function generateWarmupGrid(words, size = 6) {
+    const grid = Array(size).fill(null).map(() => Array(size).fill(null));
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const directions = [
+      { dr: 0, dc: 1 },  // horizontal kanan
+      { dr: 1, dc: 0 },  // vertikal bawah
+      { dr: 1, dc: 1 },  // diagonal turun kanan
+      { dr: 0, dc: -1 }, // horizontal kiri
+      { dr: -1, dc: 0 }  // vertikal atas
+    ];
+
+    words.forEach(word => {
+      let placed = false;
+      let attempts = 0;
+      while (!placed && attempts < 100) {
+        attempts++;
+        const dir = directions[Math.floor(Math.random() * directions.length)];
+        const r = Math.floor(Math.random() * size);
+        const c = Math.floor(Math.random() * size);
+        const endR = r + (word.length - 1) * dir.dr;
+        const endC = c + (word.length - 1) * dir.dc;
+
+        if (endR >= 0 && endR < size && endC >= 0 && endC < size) {
+          let canPlace = true;
+          for (let i = 0; i < word.length; i++) {
+            const cr = r + i * dir.dr;
+            const cc = c + i * dir.dc;
+            if (grid[cr][cc] !== null && grid[cr][cc] !== word[i]) {
+              canPlace = false;
+              break;
+            }
+          }
+          if (canPlace) {
+            for (let i = 0; i < word.length; i++) {
+              grid[r + i * dir.dr][c + i * dir.dc] = word[i];
+            }
+            placed = true;
+          }
+        }
+      }
+    });
+
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (!grid[r][c]) {
+          grid[r][c] = alphabet[Math.floor(Math.random() * alphabet.length)];
+        }
+      }
+    }
+    return grid;
+  }
+
+  function renderWarmupGrid(grid) {
+    if (!warmupGridBoard) return;
+    warmupGridBoard.innerHTML = '';
+    const size = grid.length;
+
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.dataset.r = r;
+        cell.dataset.c = c;
+        cell.textContent = grid[r][c];
+        warmupGridBoard.appendChild(cell);
+      }
+    }
+  }
+
+  function getWarmupCellCoords(element) {
+    if (!element || !element.classList.contains('grid-cell') || !element.closest('#warmup-grid-board')) return null;
+    return {
+      r: parseInt(element.dataset.r, 10),
+      c: parseInt(element.dataset.c, 10)
+    };
+  }
+
+  function updateWarmupDragVisuals() {
+    if (!warmupGridBoard) return;
+    warmupGridBoard.querySelectorAll('.grid-cell.selected').forEach(c => c.classList.remove('selected'));
+
+    if (!warmupIsDragging || !warmupDragStart || !warmupDragCurrent) {
+      if (warmupTapFirstCell) {
+        const cell = warmupGridBoard.querySelector(`[data-r="${warmupTapFirstCell.r}"][data-c="${warmupTapFirstCell.c}"]`);
+        if (cell) cell.classList.add('selected');
+        return;
+      }
+      if (warmupSelectionIndicator) {
+        warmupSelectionIndicator.textContent = '';
+        warmupSelectionIndicator.classList.remove('active');
+      }
+      warmupActiveCells = [];
+      return;
+    }
+
+    warmupActiveCells = calculateLineCells(warmupDragStart, warmupDragCurrent);
+
+    let spelled = '';
+    warmupActiveCells.forEach(pos => {
+      const cell = warmupGridBoard.querySelector(`[data-r="${pos.r}"][data-c="${pos.c}"]`);
+      if (cell) {
+        cell.classList.add('selected');
+        spelled += cell.textContent.trim();
+      }
+    });
+
+    if (warmupSelectionIndicator) {
+      if (spelled.length > 0) {
+        warmupSelectionIndicator.textContent = spelled.split('').join(' - ');
+        warmupSelectionIndicator.classList.add('active');
+      } else {
+        warmupSelectionIndicator.textContent = '';
+        warmupSelectionIndicator.classList.remove('active');
+      }
+    }
+  }
+
+  function checkWarmupWord(cells) {
+    if (!cells || cells.length < 2 || !warmupGrid) return;
+    let forward = '';
+    cells.forEach(p => {
+      forward += warmupGrid[p.r][p.c];
+    });
+    const backward = forward.split('').reverse().join('');
+
+    let matched = null;
+    if (warmupWords.includes(forward) && !warmupFoundWords.includes(forward)) {
+      matched = forward;
+    } else if (warmupWords.includes(backward) && !warmupFoundWords.includes(backward)) {
+      matched = backward;
+    }
+
+    if (matched) {
+      warmupFoundWords.push(matched);
+      const color = WARMUP_COLORS[(warmupFoundWords.length - 1) % WARMUP_COLORS.length];
+
+      cells.forEach(p => {
+        const cell = warmupGridBoard.querySelector(`[data-r="${p.r}"][data-c="${p.c}"]`);
+        if (cell) {
+          cell.style.backgroundColor = color;
+          cell.style.color = 'white';
+        }
+      });
+
+      const pill = warmupTargets ? warmupTargets.querySelector(`[data-word="${matched}"]`) : null;
+      if (pill) {
+        pill.classList.add('found');
+        pill.textContent = `✅ ${matched}`;
+      }
+
+      if (window.sounds && window.sounds.playWordFound) {
+        window.sounds.playWordFound();
+      }
+      showToast(`🔥 Pemanasan: Kamu menemukan "${matched}"!`);
+
+      if (warmupFoundWords.length === warmupWords.length) {
+        if (warmupCompletion) warmupCompletion.style.display = 'block';
+        if (window.sounds && window.sounds.playCelebration) {
+          window.sounds.playCelebration();
+        }
+      }
+    } else {
+      if (window.sounds && window.sounds.playError) {
+        window.sounds.playError();
+      }
+    }
+  }
+
+  function handleWarmupCellTap(coords) {
+    if (!coords) return;
+    if (!warmupTapFirstCell) {
+      warmupTapFirstCell = coords;
+      const cell = warmupGridBoard.querySelector(`[data-r="${coords.r}"][data-c="${coords.c}"]`);
+      if (cell) cell.classList.add('selected');
+      const char = cell ? cell.textContent.trim() : '';
+      if (warmupSelectionIndicator) {
+        warmupSelectionIndicator.textContent = `${char} (Tap huruf akhir...)`;
+        warmupSelectionIndicator.classList.add('active');
+      }
+      return;
+    }
+
+    if (warmupTapFirstCell.r === coords.r && warmupTapFirstCell.c === coords.c) {
+      clearWarmupTapSelection();
+      return;
+    }
+
+    const cells = calculateLineCells(warmupTapFirstCell, coords);
+    if (cells && cells.length >= 2) {
+      checkWarmupWord(cells);
+    }
+    clearWarmupTapSelection();
+  }
+
+  function clearWarmupTapSelection() {
+    warmupTapFirstCell = null;
+    if (warmupGridBoard) {
+      warmupGridBoard.querySelectorAll('.grid-cell.selected').forEach(c => c.classList.remove('selected'));
+    }
+    if (warmupSelectionIndicator) {
+      warmupSelectionIndicator.textContent = '';
+      warmupSelectionIndicator.classList.remove('active');
+    }
+    warmupActiveCells = [];
+  }
+
+  function submitWarmupSelection() {
+    if (!warmupIsDragging) return;
+    warmupIsDragging = false;
+    if (warmupActiveCells.length >= 2) {
+      checkWarmupWord(warmupActiveCells);
+    }
+    warmupTapFirstCell = null;
+    warmupDragStart = null;
+    warmupDragCurrent = null;
+    warmupActiveCells = [];
+    updateWarmupDragVisuals();
+  }
+
+  // Setup Event Listeners untuk Warm-up
+  if (warmupGridBoard) {
+    // Mouse
+    warmupGridBoard.addEventListener('mousedown', (e) => {
+      const coords = getWarmupCellCoords(e.target);
+      if (!coords) return;
+      warmupIsDragging = true;
+      warmupDragStart = coords;
+      warmupDragCurrent = coords;
+      updateWarmupDragVisuals();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!warmupIsDragging) return;
+      const cell = document.elementFromPoint(e.clientX, e.clientY);
+      const coords = getWarmupCellCoords(cell);
+      if (coords && (coords.r !== warmupDragCurrent.r || coords.c !== warmupDragCurrent.c)) {
+        if (warmupTapFirstCell && (coords.r !== warmupDragStart.r || coords.c !== warmupDragStart.c)) {
+          warmupTapFirstCell = null;
+        }
+        warmupDragCurrent = coords;
+        updateWarmupDragVisuals();
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (warmupIsDragging) {
+        if (!warmupActiveCells || warmupActiveCells.length <= 1) {
+          handleWarmupCellTap(warmupDragStart);
+          warmupIsDragging = false;
+          warmupDragStart = null;
+          warmupDragCurrent = null;
+          return;
+        }
+        submitWarmupSelection();
+      }
+    });
+
+    // Touch
+    warmupGridBoard.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 1) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      const cell = document.elementFromPoint(touch.clientX, touch.clientY);
+      const coords = getWarmupCellCoords(cell);
+      if (!coords) return;
+
+      warmupIsDragging = true;
+      warmupDragStart = coords;
+      warmupDragCurrent = coords;
+      updateWarmupDragVisuals();
+    }, { passive: false });
+
+    window.addEventListener('touchmove', (e) => {
+      if (!warmupIsDragging || e.touches.length !== 1) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      const cell = document.elementFromPoint(touch.clientX, touch.clientY);
+      const coords = getWarmupCellCoords(cell);
+      if (coords && (coords.r !== warmupDragCurrent.r || coords.c !== warmupDragCurrent.c)) {
+        if (warmupTapFirstCell && (coords.r !== warmupDragStart.r || coords.c !== warmupDragStart.c)) {
+          warmupTapFirstCell = null;
+        }
+        warmupDragCurrent = coords;
+        updateWarmupDragVisuals();
+      }
+    }, { passive: false });
+
+    window.addEventListener('touchend', () => {
+      if (warmupIsDragging) {
+        if (!warmupActiveCells || warmupActiveCells.length <= 1) {
+          handleWarmupCellTap(warmupDragStart);
+          warmupIsDragging = false;
+          warmupDragStart = null;
+          warmupDragCurrent = null;
+          return;
+        }
+        submitWarmupSelection();
+      }
+    });
+
+    window.addEventListener('touchcancel', () => {
+      if (warmupIsDragging) {
+        warmupIsDragging = false;
+        warmupDragStart = null;
+        warmupDragCurrent = null;
+        warmupActiveCells = [];
+        updateWarmupDragVisuals();
+      }
+    });
+  }
+
+  if (btnWarmupReset) {
+    btnWarmupReset.addEventListener('click', () => {
+      warmupSetIndex = (warmupSetIndex + 1) % WARMUP_SETS.length;
+      initWarmup(true);
+    });
   }
 
 })();

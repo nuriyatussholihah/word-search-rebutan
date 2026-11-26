@@ -80,6 +80,31 @@ class SoundManager {
     } catch (e) {}
   }
 
+  // Suara saat kata salah atau ditolak
+  playError() {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.audioCtx) return;
+
+    try {
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, this.audioCtx.currentTime);
+      osc.frequency.linearRampToValueAtTime(140, this.audioCtx.currentTime + 0.18);
+
+      gain.gain.setValueAtTime(0.08, this.audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.2);
+
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+
+      osc.start();
+      osc.stop(this.audioCtx.currentTime + 0.22);
+    } catch (e) {}
+  }
+
   // Suara peringatan detik terakhir (10s)
   playUrgentTick() {
     if (this.isMuted) return;

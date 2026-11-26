@@ -450,9 +450,18 @@ body {
 }
 
 @media (max-width: 600px) {
+  .grid-board {
+    gap: 2px;
+    padding: 3px;
+  }
   .grid-cell {
-    font-size: 0.95rem;
-    border-radius: 3px;
+    font-size: clamp(0.7rem, 2.7vw, 0.95rem);
+    border-radius: 2px;
+  }
+  .selection-indicator {
+    font-size: 0.9rem;
+    height: 28px;
+    letter-spacing: 2px;
   }
 }
 
@@ -790,5 +799,144 @@ body {
     font-size: 1.4rem;
     padding: 4px 10px;
     min-width: 80px;
+  }
+}
+
+/* ==================== WARMUP MINI GRID IN LOBBY ==================== */
+.lobby-card {
+  max-width: 520px;
+}
+
+.warmup-section {
+  margin-top: 24px;
+  padding: 16px 14px;
+  background: var(--cream-100);
+  border: 2px dashed var(--teal-600);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.warmup-header {
+  margin-bottom: 12px;
+}
+
+.warmup-badge {
+  display: inline-block;
+  background: #f97316;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.warmup-header h3 {
+  font-size: 1.15rem;
+  color: var(--teal-800);
+  margin-bottom: 4px;
+}
+
+.warmup-header p {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.warmup-targets {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+
+.warmup-target-pill {
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: white;
+  border: 1px solid var(--cream-400);
+  color: var(--text-dark);
+  transition: all 0.2s ease;
+}
+
+.warmup-target-pill.found {
+  background: #16a34a !important;
+  color: white !important;
+  border-color: #15803d !important;
+  text-decoration: line-through;
+  transform: scale(1.05);
+}
+
+.warmup-indicator {
+  min-height: 28px;
+  height: 28px;
+  font-size: 0.95rem;
+  margin: 8px auto;
+  max-width: 280px;
+  background: white;
+  border: 1px dashed var(--cream-400);
+}
+
+.warmup-board-container {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.warmup-grid {
+  grid-template-columns: repeat(6, 1fr) !important;
+  grid-template-rows: repeat(6, 1fr) !important;
+  max-width: 280px !important;
+  width: 280px !important;
+  aspect-ratio: 1 / 1;
+  gap: 4px;
+  padding: 6px;
+  background: var(--cream-200);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--teal-600);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.warmup-grid .grid-cell {
+  font-size: 1.15rem;
+  font-weight: 800;
+  border-radius: 4px;
+}
+
+.warmup-completion {
+  margin-top: 14px;
+  padding: 10px;
+  background: #ecfdf5;
+  border: 1px solid #6ee7b7;
+  border-radius: var(--radius-sm);
+  animation: fadeIn 0.3s ease;
+}
+
+.warmup-completion p {
+  color: #065f46;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+
+.btn-sm {
+  padding: 6px 14px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 600px) {
+  .warmup-grid {
+    max-width: 250px !important;
+    width: 250px !important;
+  }
+  .warmup-grid .grid-cell {
+    font-size: 1.05rem;
   }
 }

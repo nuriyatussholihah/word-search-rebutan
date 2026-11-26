@@ -45,11 +45,30 @@
 
     <!-- 2. Layar Lobby (Menunggu Host) -->
     <section id="screen-lobby" class="screen">
-      <div class="card center-box">
+      <div class="card center-box lobby-card">
         <div class="lobby-status-pill">⏳ Menunggu Host Memulai Game</div>
         <div class="player-count-display" id="lobby-player-count">0 Pemain</div>
         <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 8px;">Pemain yang sudah masuk ruang tunggu:</p>
         <div id="lobby-players-list" class="lobby-players-grid"></div>
+
+        <!-- Mode Pemanasan Jari untuk Pemain -->
+        <div class="warmup-section">
+          <div class="warmup-header">
+            <span class="warmup-badge">🔥 Pemanasan Jari</span>
+            <h3>Latihan Sebelum Mulai!</h3>
+            <p>Sambil nunggu Host mulai, asah kecepatan jarimu di mini grid ini. Bisa <strong>geser/drag</strong> atau <strong>tap huruf awal lalu huruf akhir</strong>:</p>
+          </div>
+
+          <div id="warmup-targets" class="warmup-targets"></div>
+          <div id="warmup-selection-indicator" class="selection-indicator warmup-indicator"></div>
+          <div class="warmup-board-container">
+            <div id="warmup-grid-board" class="grid-board warmup-grid"></div>
+          </div>
+          <div id="warmup-completion" class="warmup-completion" style="display: none;">
+            <p>🎉 <strong>Mantap! Jarimu sudah panas dan siap tempur pas Host mulai!</strong></p>
+            <button id="btn-warmup-reset" class="btn-secondary btn-sm">Ganti Kata Pemanasan 🔄</button>
+          </div>
+        </div>
       </div>
     </section>
 
